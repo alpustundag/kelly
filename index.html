@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kelly Criterion | Optimal Investment Strategy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #121218;
+            --bg-secondary: #1a1a22;
+            --bg-tertiary: #22222c;
+            --bg-card: #18181f;
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --accent-gold: #f59e0b;
+            --accent-emerald: #10b981;
+            --accent-rose: #f43f5e;
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --border: rgba(255,255,255,0.08);
+            --border-light: rgba(255,255,255,0.12);
+            --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: 
+                radial-gradient(ellipse at 20% 0%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(139, 92, 246, 0.06) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .header-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1.25rem;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--accent-primary);
+            margin-bottom: 1.5rem;
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #fff 0%, #a1a1aa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.15rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 1100px) {
+            .main-grid { grid-template-columns: 1fr; }
+            .header h1 { font-size: 2.5rem; }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 1.75rem;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: var(--border-light);
+            box-shadow: 0 0 60px rgba(99, 102, 241, 0.15);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            background: var(--gradient-primary);
+            color: white;
+        }
+
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .controls-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .input-group {
+            background: var(--bg-tertiary);
+            border-radius: 16px;
+            padding: 1.25rem;
+            border: 1px solid var(--border);
+        }
+
+        .input-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .input-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .input-value {
+            font-size: 1rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--bg-primary);
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.6rem;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .input-description {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.875rem;
+            padding-top: 0.875rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .kelly-result {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kelly-result h3 {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.75rem;
+        }
+
+        .kelly-percentage {
+            font-size: 4rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+        }
+
+        .kelly-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 0.75rem;
+        }
+
+        .kelly-formula {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1.25rem;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: var(--accent-emerald);
+            border: 1px solid var(--border);
+        }
+
+        .vol-adj-note {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            font-style: italic;
+        }
+
+        .volatility-indicator {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.25rem;
+            background: var(--bg-tertiary);
+            border-radius: 16px;
+            margin-top: 1.25rem;
+            border: 1px solid var(--border);
+        }
+
+        .vol-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .vol-icon.low { background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); }
+        .vol-icon.medium { background: rgba(245, 158, 11, 0.15); color: var(--accent-gold); }
+        .vol-icon.high { background: rgba(244, 63, 94, 0.15); color: var(--accent-rose); }
+
+        .vol-text h4 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.2rem; }
+        .vol-text p { font-size: 0.8rem; color: var(--text-muted); }
+
+        .insight-box {
+            background: var(--bg-tertiary);
+            border-radius: 16px;
+            padding: 1.25rem;
+            border-left: 3px solid var(--accent-primary);
+        }
+
+        .insight-box h4 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--accent-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .insight-box p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .simulation-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .strategies-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        @media (max-width: 700px) {
+            .strategies-row { grid-template-columns: 1fr; }
+        }
+
+        .strategy-card {
+            background: var(--bg-tertiary);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .strategy-card.kelly {
+            border-color: rgba(99, 102, 241, 0.3);
+            background: linear-gradient(180deg, rgba(99, 102, 241, 0.08) 0%, var(--bg-tertiary) 100%);
+        }
+
+        .strategy-card.aggressive {
+            border-color: rgba(244, 63, 94, 0.3);
+            background: linear-gradient(180deg, rgba(244, 63, 94, 0.08) 0%, var(--bg-tertiary) 100%);
+        }
+
+        .strategy-card.conservative {
+            border-color: rgba(16, 185, 129, 0.3);
+            background: linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, var(--bg-tertiary) 100%);
+        }
+
+        .strategy-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            margin: 0 auto 1rem;
+        }
+
+        .strategy-card.kelly .strategy-icon { background: rgba(99, 102, 241, 0.15); color: var(--accent-primary); }
+        .strategy-card.aggressive .strategy-icon { background: rgba(244, 63, 94, 0.15); color: var(--accent-rose); }
+        .strategy-card.conservative .strategy-icon { background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); }
+
+        .strategy-name { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.25rem; }
+        .strategy-alloc { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.75rem; }
+
+        .strategy-bet {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            background: var(--bg-primary);
+            padding: 0.35rem 0.6rem;
+            border-radius: 6px;
+            margin: 0.5rem auto;
+            display: inline-block;
+        }
+
+        .strategy-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .strategy-card.kelly .strategy-value { color: var(--accent-primary); }
+        .strategy-card.aggressive .strategy-value { color: var(--accent-rose); }
+        .strategy-card.conservative .strategy-value { color: var(--accent-emerald); }
+
+        .strategy-change { font-size: 0.8rem; font-weight: 600; margin-top: 0.5rem; }
+        .strategy-change.positive { color: var(--accent-emerald); }
+        .strategy-change.negative { color: var(--accent-rose); }
+
+        .chart-wrapper {
+            background: var(--bg-tertiary);
+            border-radius: 16px;
+            padding: 1.25rem;
+            border: 1px solid var(--border);
+        }
+
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+        .legend-dot.kelly { background: var(--accent-primary); }
+        .legend-dot.aggressive { background: var(--accent-rose); }
+        .legend-dot.conservative { background: var(--accent-emerald); }
+
+        .chart-container { height: 280px; }
+        .chart-canvas { width: 100%; height: 100%; }
+
+        .controls-row {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.875rem 1.75rem;
+            border-radius: 12px;
+            border: none;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+        }
+
+        @media (max-width: 800px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .stat-item {
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 0.4rem;
+        }
+
+        .stat-value {
+            font-size: 1.15rem;
+            font-weight: 700;
+        }
+
+        .stat-value.highlight {
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .explanation-section { margin-top: 3rem; }
+
+        .explanation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .explanation-card {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 1.25rem;
+            border: 1px solid var(--border);
+        }
+
+        .explanation-card .icon-wrapper {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.75rem;
+            font-size: 1.1rem;
+        }
+
+        .explanation-card:nth-child(1) .icon-wrapper { background: rgba(99, 102, 241, 0.15); color: var(--accent-primary); }
+        .explanation-card:nth-child(2) .icon-wrapper { background: rgba(245, 158, 11, 0.15); color: var(--accent-gold); }
+        .explanation-card:nth-child(3) .icon-wrapper { background: rgba(244, 63, 94, 0.15); color: var(--accent-rose); }
+        .explanation-card:nth-child(4) .icon-wrapper { background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); }
+
+        .explanation-card h4 { font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; }
+        .explanation-card p { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; }
+
+        .formula-display {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            text-align: center;
+            letter-spacing: 0.02em;
+        }
+
+        .formula-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .formula-item {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .formula-var {
+            font-weight: 600;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            margin-right: 0.25rem;
+        }
+
+        .formula-var.purple { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+        .formula-var.blue { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        .formula-var.green { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .formula-var.rose { background: rgba(244, 63, 94, 0.2); color: #fb7185; }
+
+        .vol-table {
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            width: 100%;
+            border-collapse: collapse;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .vol-table th,
+        .vol-table td {
+            padding: 0.4rem 0.75rem;
+            text-align: left;
+        }
+
+        .vol-table thead tr {
+            background: var(--bg-primary);
+        }
+
+        .vol-table th {
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.65rem;
+            letter-spacing: 0.05em;
+            padding: 0.35rem 0.75rem;
+        }
+
+        .vol-table tbody tr {
+            background: var(--bg-tertiary);
+            border-top: 1px solid var(--border);
+        }
+
+        .vol-table .vol-low { color: var(--accent-emerald); }
+        .vol-table .vol-medium { color: var(--accent-gold); }
+        .vol-table .vol-high { color: var(--accent-rose); }
+
+        .footer {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .history-box {
+            display: flex;
+            align-items: flex-start;
+            gap: 1.25rem;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.04) 100%);
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .history-icon {
+            width: 48px;
+            height: 48px;
+            min-width: 48px;
+            border-radius: 12px;
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .history-content h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .history-content p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .history-content strong {
+            color: var(--accent-primary);
+        }
+
+        .footer p { font-size: 0.85rem; color: var(--text-muted); }
+        .footer a { color: var(--accent-primary); text-decoration: none; }
+
+        .simulating .strategy-value {
+            animation: pulse 0.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-badge">
+                <i class="fas fa-chart-line"></i>
+                Interactive Simulation
+            </div>
+            <h1>Kelly Criterion</h1>
+            <p>The mathematically optimal strategy for maximizing long-term wealth while minimizing risk of ruin</p>
+        </header>
+
+        <div class="main-grid">
+            <div class="controls-panel">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon"><i class="fas fa-sliders-h"></i></div>
+                        <span class="card-title">Parameters</span>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-header">
+                            <span class="input-label">Win Probability</span>
+                            <span class="input-value" id="prob-value">55%</span>
+                        </div>
+                        <input type="range" class="slider" id="slider-prob" min="10" max="90" value="55">
+                        <div class="slider-labels"><span>10%</span><span>90%</span></div>
+                        <div class="input-description">The probability that your investment will be profitable</div>
+                    </div>
+
+                    <div class="input-group" style="margin-top: 1rem;">
+                        <div class="input-header">
+                            <span class="input-label">Win/Loss Ratio</span>
+                            <span class="input-value" id="odds-value">1:1</span>
+                        </div>
+                        <input type="range" class="slider" id="slider-odds" min="0.5" max="3" step="0.1" value="1">
+                        <div class="slider-labels"><span>0.5:1</span><span>3:1</span></div>
+                        <div class="input-description">How much you win relative to your bet (1:1 = win equals stake)</div>
+                    </div>
+
+                    <div class="input-group" style="margin-top: 1rem;">
+                        <div class="input-header">
+                            <span class="input-label">Volatility (Std Dev)</span>
+                            <span class="input-value" id="vol-value">20%</span>
+                        </div>
+                        <input type="range" class="slider" id="slider-vol" min="5" max="50" value="20">
+                        <div class="slider-labels"><span>5% Calm</span><span>50% Wild</span></div>
+                        <div class="input-description">Return fluctuation — higher volatility = more uncertainty</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon"><i class="fas fa-bullseye"></i></div>
+                        <span class="card-title">Optimal Kelly Fraction</span>
+                    </div>
+
+                    <div class="kelly-result">
+                        <h3>Bet This Fraction</h3>
+                        <div class="kelly-percentage" id="kelly-result">10%</div>
+                        <div class="kelly-subtitle" id="kelly-advice">Balanced strategy</div>
+                        <div class="kelly-formula" id="kelly-formula">f* = (0.55 × 1 - 0.45) / 1 × 0.80 = 8%</div>
+                        <div class="vol-adj-note">vol_adj = 1 - (volatility / 100) → Higher volatility reduces Kelly</div>
+                    </div>
+
+                    <div class="volatility-indicator">
+                        <div class="vol-icon medium" id="vol-icon"><i class="fas fa-chart-bar"></i></div>
+                        <div class="vol-text">
+                            <h4 id="vol-title">Medium Volatility</h4>
+                            <p id="vol-desc">Standard market conditions</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="insight-box">
+                    <h4><i class="fas fa-lightbulb"></i> Why Kelly Matters</h4>
+                    <p>Betting more than Kelly guarantees <strong>ruin</strong> in the long run. Watch the "Aggressive" strategy crash!</p>
+                </div>
+            </div>
+
+            <div class="simulation-panel">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon"><i class="fas fa-balance-scale"></i></div>
+                        <span class="card-title">Strategy Comparison</span>
+                    </div>
+
+                    <div class="strategies-row" id="strategies-container">
+                        <div class="strategy-card kelly">
+                            <div class="strategy-icon"><i class="fas fa-brain"></i></div>
+                            <div class="strategy-name">Kelly Optimal</div>
+                            <div class="strategy-alloc" id="kelly-alloc">10% per bet</div>
+                            <div class="strategy-value" id="wealth-kelly">$10,000</div>
+                            <div class="strategy-bet" id="bet-kelly">Betting: $1,000</div>
+                            <div class="strategy-change positive" id="change-kelly">+0.00%</div>
+                        </div>
+                        <div class="strategy-card aggressive">
+                            <div class="strategy-icon"><i class="fas fa-fire"></i></div>
+                            <div class="strategy-name">Aggressive</div>
+                            <div class="strategy-alloc">40% per bet</div>
+                            <div class="strategy-value" id="wealth-aggressive">$10,000</div>
+                            <div class="strategy-bet" id="bet-aggressive">Betting: $4,000</div>
+                            <div class="strategy-change" id="change-aggressive">+0.00%</div>
+                        </div>
+                        <div class="strategy-card conservative">
+                            <div class="strategy-icon"><i class="fas fa-shield-alt"></i></div>
+                            <div class="strategy-name">Conservative</div>
+                            <div class="strategy-alloc">5% per bet</div>
+                            <div class="strategy-value" id="wealth-conservative">$10,000</div>
+                            <div class="strategy-bet" id="bet-conservative">Betting: $500</div>
+                            <div class="strategy-change" id="change-conservative">+0.00%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="chart-wrapper">
+                        <div class="chart-legend">
+                            <div class="legend-item"><div class="legend-dot kelly"></div><span>Kelly Optimal</span></div>
+                            <div class="legend-item"><div class="legend-dot aggressive"></div><span>Aggressive (40%)</span></div>
+                            <div class="legend-item"><div class="legend-dot conservative"></div><span>Conservative (5%)</span></div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chart" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls-row">
+                    <button class="btn btn-primary" id="btn-simulate"><i class="fas fa-play"></i> Run 100 Bets</button>
+                    <button class="btn btn-secondary" id="btn-step"><i class="fas fa-step-forward"></i> Single Bet</button>
+                    <button class="btn btn-secondary" id="btn-reset"><i class="fas fa-redo"></i> Reset</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon"><i class="fas fa-chart-pie"></i></div>
+                        <span class="card-title">Simulation Statistics</span>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-label">Total Bets</div>
+                            <div class="stat-value highlight" id="stat-rounds">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Win Rate</div>
+                            <div class="stat-value" id="stat-winrate">—</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Kelly Peak</div>
+                            <div class="stat-value" id="stat-kelly-max">$10K</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Aggressive Bust?</div>
+                            <div class="stat-value" id="stat-bankrupt" style="color: var(--accent-emerald);">No</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="explanation-section">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon"><i class="fas fa-graduation-cap"></i></div>
+                    <span class="card-title">How It Works</span>
+                </div>
+                <div class="explanation-grid">
+                    <div class="explanation-card">
+                        <div class="icon-wrapper"><i class="fas fa-calculator"></i></div>
+                        <h4>The Kelly Formula</h4>
+                        <div class="formula-display">f* = (bp - q) / b</div>
+                        <div class="formula-legend">
+                            <div class="formula-item"><span class="formula-var purple">f*</span> = Fraction to bet</div>
+                            <div class="formula-item"><span class="formula-var blue">b</span> = Win/loss ratio</div>
+                            <div class="formula-item"><span class="formula-var green">p</span> = Win probability</div>
+                            <div class="formula-item"><span class="formula-var rose">q</span> = Loss probability (1-p)</div>
+                        </div>
+                    </div>
+                    <div class="explanation-card">
+                        <div class="icon-wrapper"><i class="fas fa-wind"></i></div>
+                        <h4>Volatility Impact</h4>
+                        <p style="margin-bottom: 0.5rem;">Higher volatility = more uncertainty. Kelly is automatically reduced:</p>
+                        <table class="vol-table"><thead><tr><th>Volatility</th><th>vol_adj</th><th>Effect</th></tr></thead><tbody><tr><td class="vol-low">5-15%</td><td>0.95-0.85</td><td>Full Kelly</td></tr><tr><td class="vol-medium">16-30%</td><td>0.84-0.70</td><td>Reduced</td></tr><tr><td class="vol-high">31-50%</td><td>0.69-0.50</td><td>Half Kelly</td></tr></tbody></table>
+                    </div>
+                    <div class="explanation-card">
+                        <div class="icon-wrapper"><i class="fas fa-skull-crossbones"></i></div>
+                        <h4>Over-betting Danger</h4>
+                        <p>Betting more than Kelly = "Gambler's Ruin"<br>The 40% strategy will <strong>almost certainly bust</strong>.</p>
+                    </div>
+                    <div class="explanation-card">
+                        <div class="icon-wrapper"><i class="fas fa-seedling"></i></div>
+                        <h4>Under-betting Cost</h4>
+                        <p>Being too conservative is safe but...<br>You'll <strong>never reach maximum potential</strong>.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="history-box">
+            <div class="history-icon"><i class="fas fa-history"></i></div>
+            <div class="history-content">
+                <h4>The Origin Story</h4>
+                <p><strong>John L. Kelly Jr.</strong>, a physicist at <strong>Bell Labs</strong>, published the Kelly Criterion in 1956. 
+                He was inspired by his colleague <strong>Claude Shannon</strong>'s Information Theory — realizing that the same math 
+                used to optimize data transmission over noisy channels could optimize betting over uncertain outcomes. 
+                Shannon himself used it to beat Las Vegas and the stock market.</p>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>Built for <a href="https://alpustundag.com" target="_blank">alpustundag.com</a> — Interactive learning tools for AI & Business Analytics</p>
+        </footer>
+    </div>
+
+    <script>
+        const INITIAL_WEALTH = 10000;
+        let params = { prob: 0.55, odds: 1.0, volatility: 0.20 };
+        let wealth = { kelly: [INITIAL_WEALTH], aggressive: [INITIAL_WEALTH], conservative: [INITIAL_WEALTH] };
+        let stats = { rounds: 0, wins: 0, kellyMax: INITIAL_WEALTH, aggressiveBankrupt: false };
+        let isRunning = false;
+
+        function calculateKelly(p, b) {
+            const q = 1 - p;
+            let kelly = (b * p - q) / b;
+            kelly *= (1 - params.volatility / 100);
+            return Math.max(0, Math.min(0.5, kelly));
+        }
+
+        function updateKellyDisplay() {
+            const kelly = calculateKelly(params.prob, params.odds);
+            const kellyPercent = (kelly * 100).toFixed(1);
+            
+            document.getElementById('kelly-result').textContent = `${kellyPercent}%`;
+            document.getElementById('kelly-alloc').textContent = `${kellyPercent}% per bet`;
+            
+            const q = (1 - params.prob).toFixed(2);
+            const volAdj = (1 - params.volatility / 100).toFixed(2);
+            const rawKelly = ((params.odds * params.prob - (1 - params.prob)) / params.odds * 100).toFixed(1);
+            document.getElementById('kelly-formula').textContent = `f* = (${params.odds} × ${params.prob.toFixed(2)} - ${q}) / ${params.odds} × ${volAdj} = ${kellyPercent}%`;
+            
+            const advice = document.getElementById('kelly-advice');
+            if (kelly <= 0) { advice.textContent = "⚠️ Negative edge — don't bet!"; advice.style.color = 'var(--accent-rose)'; }
+            else if (kelly < 0.05) { advice.textContent = "Low edge — proceed with caution"; advice.style.color = 'var(--text-muted)'; }
+            else if (kelly < 0.15) { advice.textContent = "Reasonable opportunity"; advice.style.color = 'var(--accent-gold)'; }
+            else { advice.textContent = "Strong edge! 🎯"; advice.style.color = 'var(--accent-emerald)'; }
+            
+            updateVolatilityIndicator();
+            return kelly;
+        }
+
+        function updateVolatilityIndicator() {
+            const vol = params.volatility;
+            const icon = document.getElementById('vol-icon');
+            const title = document.getElementById('vol-title');
+            const desc = document.getElementById('vol-desc');
+            
+            icon.classList.remove('low', 'medium', 'high');
+            
+            if (vol <= 15) {
+                icon.classList.add('low');
+                icon.innerHTML = '<i class="fas fa-leaf"></i>';
+                title.textContent = 'Low Volatility';
+                title.style.color = 'var(--accent-emerald)';
+                desc.textContent = 'Calm market — full Kelly is reasonable';
+            } else if (vol <= 30) {
+                icon.classList.add('medium');
+                icon.innerHTML = '<i class="fas fa-chart-bar"></i>';
+                title.textContent = 'Medium Volatility';
+                title.style.color = 'var(--accent-gold)';
+                desc.textContent = 'Normal conditions — Kelly adjusted';
+            } else {
+                icon.classList.add('high');
+                icon.innerHTML = '<i class="fas fa-bolt"></i>';
+                title.textContent = 'High Volatility';
+                title.style.color = 'var(--accent-rose)';
+                desc.textContent = 'Turbulent market — Kelly auto-reduced!';
+            }
+        }
+
+        function simulateRound() {
+            const kellyFraction = calculateKelly(params.prob, params.odds);
+            const baseWin = Math.random() < params.prob;
+            const volNoise = (Math.random() - 0.5) * 2 * (params.volatility / 100);
+            
+            [['kelly', kellyFraction], ['aggressive', 0.40], ['conservative', 0.05]].forEach(([strategy, fraction]) => {
+                const current = wealth[strategy][wealth[strategy].length - 1];
+                if (current < 1) { wealth[strategy].push(0); return; }
+                
+                const bet = current * fraction;
+                let newWealth = baseWin 
+                    ? current + bet * params.odds * (1 + volNoise)
+                    : current - bet * (1 + Math.abs(volNoise));
+                wealth[strategy].push(Math.max(0, newWealth));
+            });
+            
+            stats.rounds++;
+            if (baseWin) stats.wins++;
+            if (wealth.kelly[wealth.kelly.length - 1] > stats.kellyMax) stats.kellyMax = wealth.kelly[wealth.kelly.length - 1];
+            if (wealth.aggressive[wealth.aggressive.length - 1] < 100) stats.aggressiveBankrupt = true;
+        }
+
+        function formatCurrency(val) {
+            if (val <= 0) return '$0';
+            const exp = Math.floor(Math.log10(val));
+            if (exp <= 5) {
+                if (val >= 1e6) return `$${(val/1e6).toFixed(2)}M`;
+                if (val >= 1e3) return `$${(val/1e3).toFixed(1)}K`;
+                return `$${val.toFixed(0)}`;
+            }
+            return `$${(val / Math.pow(10, exp)).toFixed(2)} × 10^${exp}`;
+        }
+
+        function formatPercent(p) {
+            const prefix = p >= 0 ? '+' : '';
+            const abs = Math.abs(p);
+            if (abs >= 1e6) return `${prefix}${(p / Math.pow(10, Math.floor(Math.log10(abs)))).toFixed(2)} × 10^${Math.floor(Math.log10(abs))}%`;
+            if (abs >= 1e4) return `${prefix}${(p/1e3).toFixed(2)}K%`;
+            return `${prefix}${p.toFixed(2)}%`;
+        }
+
+        function updateDisplay() {
+            const [k, a, c] = ['kelly', 'aggressive', 'conservative'].map(s => wealth[s][wealth[s].length - 1]);
+            
+            document.getElementById('wealth-kelly').textContent = formatCurrency(k);
+            document.getElementById('wealth-aggressive').textContent = formatCurrency(a);
+            document.getElementById('wealth-conservative').textContent = formatCurrency(c);
+            
+            // Update bet amounts
+            const kellyFraction = calculateKelly(params.prob, params.odds);
+            document.getElementById('bet-kelly').textContent = `Betting: ${formatCurrency(k * kellyFraction)}`;
+            document.getElementById('bet-aggressive').textContent = `Betting: ${formatCurrency(a * 0.40)}`;
+            document.getElementById('bet-conservative').textContent = `Betting: ${formatCurrency(c * 0.05)}`;
+            
+            ['kelly', 'aggressive', 'conservative'].forEach((s, i) => {
+                const val = [k, a, c][i];
+                const change = (val / INITIAL_WEALTH - 1) * 100;
+                const el = document.getElementById(`change-${s}`);
+                el.textContent = formatPercent(change);
+                el.className = `strategy-change ${change >= 0 ? 'positive' : 'negative'}`;
+            });
+            
+            document.getElementById('stat-rounds').textContent = stats.rounds;
+            document.getElementById('stat-winrate').textContent = stats.rounds > 0 ? `${((stats.wins / stats.rounds) * 100).toFixed(0)}%` : '—';
+            document.getElementById('stat-kelly-max').textContent = formatCurrency(stats.kellyMax);
+            const bankrupt = document.getElementById('stat-bankrupt');
+            bankrupt.textContent = stats.aggressiveBankrupt ? '💀 Yes!' : 'No';
+            bankrupt.style.color = stats.aggressiveBankrupt ? 'var(--accent-rose)' : 'var(--accent-emerald)';
+            
+            drawChart();
+        }
+
+        function drawChart() {
+            const canvas = document.getElementById('chart');
+            const ctx = canvas.getContext('2d');
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * 2;
+            canvas.height = rect.height * 2;
+            ctx.scale(2, 2);
+            
+            const w = rect.width, h = rect.height;
+            const pad = { t: 20, r: 20, b: 30, l: 65 };
+            
+            ctx.fillStyle = '#22222c';
+            ctx.fillRect(0, 0, w, h);
+            
+            const all = [...wealth.kelly, ...wealth.aggressive, ...wealth.conservative];
+            const max = Math.max(...all), min = Math.min(...all.filter(v => v > 0), INITIAL_WEALTH * 0.1);
+            const logMax = Math.log10(max), logMin = Math.log10(Math.max(1, min));
+            const logRange = logMax - logMin || 1;
+            
+            ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+            ctx.font = '10px Inter';
+            ctx.fillStyle = '#71717a';
+            
+            for (let i = 0; i <= 5; i++) {
+                const lv = logMin + logRange * i / 5;
+                const v = Math.pow(10, lv);
+                const y = h - pad.b - ((lv - logMin) / logRange) * (h - pad.t - pad.b);
+                ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(w - pad.r, y); ctx.stroke();
+                ctx.fillText(v >= 1e6 ? `$${(v/1e6).toFixed(1)}M` : v >= 1e3 ? `$${(v/1e3).toFixed(0)}K` : `$${v.toFixed(0)}`, 5, y + 3);
+            }
+            
+            const startY = h - pad.b - ((Math.log10(INITIAL_WEALTH) - logMin) / logRange) * (h - pad.t - pad.b);
+            ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath(); ctx.moveTo(pad.l, startY); ctx.lineTo(w - pad.r, startY); ctx.stroke();
+            ctx.setLineDash([]);
+            
+            [{ d: wealth.conservative, c: '#10b981' }, { d: wealth.aggressive, c: '#f43f5e' }, { d: wealth.kelly, c: '#6366f1' }].forEach(({ d, c }) => {
+                if (d.length < 2) return;
+                ctx.strokeStyle = c;
+                ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                d.forEach((v, i) => {
+                    const x = pad.l + (w - pad.l - pad.r) * i / (d.length - 1 || 1);
+                    const lv = Math.log10(Math.max(1, v));
+                    const y = h - pad.b - ((lv - logMin) / logRange) * (h - pad.t - pad.b);
+                    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                });
+                ctx.stroke();
+            });
+            
+            ctx.fillStyle = '#71717a';
+            ctx.font = '11px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${wealth.kelly.length - 1} bets`, w / 2, h - 8);
+        }
+
+        document.getElementById('slider-prob').addEventListener('input', e => {
+            params.prob = e.target.value / 100;
+            document.getElementById('prob-value').textContent = `${e.target.value}%`;
+            updateKellyDisplay();
+        });
+
+        document.getElementById('slider-odds').addEventListener('input', e => {
+            params.odds = parseFloat(e.target.value);
+            document.getElementById('odds-value').textContent = `${params.odds}:1`;
+            updateKellyDisplay();
+        });
+
+        document.getElementById('slider-vol').addEventListener('input', e => {
+            params.volatility = parseInt(e.target.value);
+            document.getElementById('vol-value').textContent = `${e.target.value}%`;
+            updateKellyDisplay();
+        });
+
+        document.getElementById('btn-simulate').addEventListener('click', async () => {
+            if (isRunning) return;
+            isRunning = true;
+            document.getElementById('strategies-container').classList.add('simulating');
+            document.getElementById('btn-simulate').disabled = true;
+            document.getElementById('btn-step').disabled = true;
+            
+            for (let i = 0; i < 100; i++) {
+                simulateRound();
+                if (i % 5 === 0) { updateDisplay(); await new Promise(r => setTimeout(r, 30)); }
+            }
+            
+            updateDisplay();
+            document.getElementById('strategies-container').classList.remove('simulating');
+            isRunning = false;
+            document.getElementById('btn-simulate').disabled = false;
+            document.getElementById('btn-step').disabled = false;
+        });
+
+        document.getElementById('btn-step').addEventListener('click', () => { if (!isRunning) { simulateRound(); updateDisplay(); } });
+
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            isRunning = false;
+            wealth = { kelly: [INITIAL_WEALTH], aggressive: [INITIAL_WEALTH], conservative: [INITIAL_WEALTH] };
+            stats = { rounds: 0, wins: 0, kellyMax: INITIAL_WEALTH, aggressiveBankrupt: false };
+            updateDisplay();
+        });
+
+        updateKellyDisplay();
+        updateDisplay();
+    </script>
+</body>
+</html>
